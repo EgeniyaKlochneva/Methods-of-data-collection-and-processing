@@ -30,7 +30,7 @@ params = {
 
 url = 'https://api.vk.com/method/{method}?{params}&access_token={token}&v=5.78'
 
-#https://api.vk.com/method/wall.get?owner_id=120159853&access_token=38fa46d4c0c10bab105c760cc44ed373c0bc6a34405931f34c765ea&v=5.78
+
 
 response = requests.get(url)
 
