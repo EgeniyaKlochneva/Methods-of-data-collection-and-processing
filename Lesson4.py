@@ -36,7 +36,26 @@ def lenta_parser_news():
 
         collection.replace_one({'url': news['url']}, news, True)
 
+def yandex_parser_news(echo=False):
+    yandex_url = 'https://yandex.ru/news/'
+    response = requests.get(yandex_url, headers=header)
+    dom = html.fromstring(response.text)
+    items = dom.xpath('//article')[:5]
+    news = {}
+    for item in items:
+        news['title'] = item.xpath('..//h2/text()')[0].replace('\xa0', ' ')
+        news['url'] = item.xpath('..//a/@href')[0]
+        news['source'] = item.xpath('..//a/text()')[0]
+        news['date'] = item.xpath('..//span[@class="mg-card-source__time"]/text()')[0]
+        if echo:
+            print(news)
+        collection.replace_one({'url': news['url']}, news, True)
+        #insert_collection(news)
 
 lenta_parser_news()
+for i in collection.find({}):
+    pprint(i)
+
+yandex_parser_news()
 for i in collection.find({}):
     pprint(i)
