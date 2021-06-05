@@ -1,39 +1,35 @@
 from selenium import webdriver
-
 from selenium.webdriver.chrome.options import Options
-import time
 from pymongo import MongoClient
+import time
+import json
 
 client = MongoClient('localhost', 27017)
 db = client['hits_mv']
 hits = db.sales_hits
 
-
-def write_to_mongo(elems):
-    for elem in elems:
-        name = elem.find_element_by_class_name('fl-product-tile-title__link sel-product-tile-title').text
-        price = elem.find_element_by_class_name('fl-product-tile-price__current').text
-        hits.insert_one({'name': name, 'price': price})
-
-
 chrome_options = Options()
-chrome_options.add_argument('start-max')
+chrome_options.add_argument('start-maximized')
 
 driver = webdriver.Chrome(options=chrome_options)
 driver.get('https://www.mvideo.ru/')
 
-block = driver.find_element_by_class_name('grid-view')
-elems = block.find_elements_by_class_name('gallery-list-item')
+section = driver.find_element_by_xpath("//h2[contains(text(),'Новинки')]/ancestor::div[@class='section']")
+time.sleep(5)
+button = section.find_element_by_class_name('i-icon-fl-arrow-right')
 
-#write_to_mongo(elems)
-#gallery-layout_products gallery-layout_product-set
-buttons = block.find_element_by_class_name('carousel-paging').find_elements_by_tag_name('a')[1:]
-for button in buttons:
+data = set()
+len_data = 0
+while True:
     button.click()
     time.sleep(2)
-    block = driver.find_element_by_class_name('gallery-layout_products gallery-layout_product-set grid-view')
-    elems = block.find_elements_by_class_name('gallery-list-item')[:4]
-    write_to_mongo(elems)
+    data.update(section.find_elements_by_xpath(".//a[contains(@class, 'fl-product-tile-picture')]"))
+    if len_data == len(data):
+        break
+    else:
+        len_data = len(data)
 
-
-#это вообще реально победить?... Ну что опять не так.. Я уже столько вариантов перебрала.И так и эдак..
+for good in data:
+    print(good.get_attribute('data-product-info'))
+    j_data = json.loads(good.get_attribute('data-product-info'))
+    hits.insert_one(j_data)
